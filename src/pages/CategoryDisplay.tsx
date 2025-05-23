@@ -5,6 +5,8 @@ import { useProductContext } from "../context/ContextApi";
 import styled from "styled-components";
 import { Pen } from "lucide-react";
 import ProductCard from "../components/ProductCard";
+import { getClosestDate, parseDate } from "../utils/DateTransform";
+import DateStamp from "../components/DateStamp";
 
 const Main = styled.main`
   position: relative;
@@ -75,12 +77,13 @@ export const Cell = styled.div`
   width: 80%;
   border-radius: .3rem;
   margin-bottom: .2rem;
-  transition: all 1s;
+  transition: all .34s;
 
   &:hover {
     cursor: pointer;
-    height: 13%;
-    transition: all 1s;
+    /* height: 13%; */
+    box-shadow: 0 0 60px rgba(0, 0, 0, 0.6);
+    transition: all .34s;
   }
 
   & > :nth-child(1) {
@@ -108,14 +111,19 @@ const CategoryDisplay = () => {
 
   React.useEffect(() => {
     const prepareProductList = async () => {
-      const produtosFiltrados = products.filter(
-        (produto) => produto.category === category.category
-      );
+      const produtosFiltrados = products
+        .filter((produto) => produto.category === category.category)
+        .sort((a, b) => {
+          const closestA = parseDate(getClosestDate(a.expDate));
+          const closestB = parseDate(getClosestDate(b.expDate));
+          return closestA.getTime() - closestB.getTime();
+        });
+
       setFilteredProducts(produtosFiltrados);
     };
 
     prepareProductList();
-  }, []);
+  }, [category, products]);
 
   return (
     <Main>
@@ -129,11 +137,15 @@ const CategoryDisplay = () => {
         </SubtitleSection>
 
         {filteredProducts.map(product => (
-            <Cell key={product.id}>
-              <span>{product.name}</span>
-              <span>{product.expDate.join(" | ")}</span>
-            </Cell>
-          ))}
+          <Cell key={product.id}>
+            <span>{product.name}</span>
+            <span>
+              {product.expDate.map((date) => (
+                <DateStamp key={date} date={date} />
+              ))}
+            </span>
+          </Cell>
+        ))}
       </MainInfo>
     </Main>
   )
